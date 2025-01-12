@@ -21,7 +21,7 @@ spec:
     spec:
       initContainers:
         - name: init-log-permissions
-          image: busybox
+          image: marckelmarson/consomyzone:0.2.3
           command: ["sh", "-c", "chown -R www-data:www-data /var/www/consomyzone/var/log && chmod -R 775 /var/www/consomyzone/var/log && chown -R www-data:www-data /var/www/consomyzone/public/uploads && chmod -R 775 /var/www/consomyzone/public/uploads"]
           volumeMounts:
             - name: logs-volume
@@ -30,7 +30,7 @@ spec:
               mountPath: /var/www/consomyzone/public/uploads   
       containers:
         - name: consomyzone-container
-          image: marckelmarson/consomyzone:0.1.0
+          image: marckelmarson/consomyzone:0.2.3
           ports:
             - containerPort: 80
           volumeMounts:
