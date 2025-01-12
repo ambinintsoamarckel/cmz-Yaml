@@ -30,7 +30,7 @@ spec:
               mountPath: /var/www/consomyzone/public/uploads   
       containers:
         - name: consomyzone-container
-          image: marckelmarson/consomyzone:0.2.3
+          image: marckelmarson/consomyzone:0.2.4
           ports:
             - containerPort: 80
           volumeMounts:
