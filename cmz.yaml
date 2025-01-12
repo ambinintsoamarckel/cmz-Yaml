@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consomyzone-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consomyzone
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 1
+  minReadySeconds: 10
+  revisionHistoryLimit: 3
+  template:
+    metadata:
+      labels:
+        app: consomyzone
+    spec:
+      initContainers:
+        - name: init-log-permissions
+          image: busybox
+          command: ["sh", "-c", "chown -R www-data:www-data /var/www/consomyzone/var/log && chmod -R 775 /var/www/consomyzone/var/log && chown -R www-data:www-data /var/www/consomyzone/public/uploads && chmod -R 775 /var/www/consomyzone/public/uploads"]
+          volumeMounts:
+            - name: logs-volume
+              mountPath: /var/www/consomyzone/var/log
+            - name: public-volume
+              mountPath: /var/www/consomyzone/public/uploads   
+      containers:
+        - name: consomyzone-container
+          image: marckelmarson/consomyzone:0.1.0
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: public-volume
+              mountPath: /var/www/consomyzone/public/uploads
+            - name: logs-volume
+              mountPath: /var/www/consomyzone/var/log
+          envFrom:
+            - configMapRef:
+                name: consomyzone-config
+          env:
+            - name: APP_ENV
+              value: "dev"
+          resources:
+            requests:
+              memory: 300Mi
+              cpu: 0.3
+            limits:
+              memory: 500Mi
+              cpu: 0.6
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "rm -rf /var/www/consomyzone/var/log/*"]
+      volumes:
+        - name: public-volume
+          persistentVolumeClaim:
+            claimName: public-pvc
+        - name: logs-volume
+          persistentVolumeClaim:
+            claimName: logs-pvc
